@@ -147,6 +147,7 @@ module.exports = function (grunt) {
             var buffer = fs.readFileSync('clients/web/test/testEnv.jadehtml');
             var dependencies = [
                 '/clients/web/test/testUtils.js',
+                '/plugins/minerva/plugin_tests/minervaTestUtils.js',
                 '/clients/web/static/built/libs.min.js',
                 '/' + staticDir + '/geo.ext.min.js',
                 // '/' + rootStaticDir + '/libs.min.js', // libs included in jade template
