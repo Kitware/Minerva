@@ -16,7 +16,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 ###############################################################################
-
+import httplib
+import binascii
 from girder.api import access
 from girder.api.describe import Description
 from girder.api.rest import loadmodel
@@ -26,6 +27,7 @@ from girder.plugins.minerva.rest.dataset import Dataset
 
 
 class WmsDataset(Dataset):
+
     def __init__(self):
         self.resourceName = 'minerva_dataset_wms'
         self.route('POST', (), self.createWmsDataset)
@@ -34,12 +36,28 @@ class WmsDataset(Dataset):
     @loadmodel(map={'wmsSourceId': 'wmsSource'}, model='item',
                level=AccessType.READ)
     def createWmsDataset(self, wmsSource, params):
+        # Get layer legend (TODO// Include authentication in the future)
+        # Legend to be included in the metadata?
+        base_url = wmsSource['meta']['minerva']['wms_params']['base_url']
+        hostName = base_url[7:28]
+        layerName = params['name']
+        conn = httplib.HTTPConnection(hostName)
+        conn.request("GET",
+                     "/geoserver/ows?service=WMS&request=" +
+                     "GetLegendGraphic&format=image" +
+                     "%2Fpng&width=20&height=20&layer=" +
+                     layerName
+                     )
+        response = conn.getresponse()
+        legend = binascii.b2a_base64(response.read())
+
         self.requireParams(('name', 'wmsParams'), params)
         name = params['name']
         wmsParams = params['wmsParams']
         minerva_metadata = {
             'original_type': 'wms',
             'dataset_type': 'wms',
+            'legend': legend,
             'source_id': wmsSource['_id'],
             'wms_params': wmsParams,
             'base_url': wmsSource['meta']['minerva']['wms_params']['base_url']

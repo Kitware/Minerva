@@ -1,0 +1,13 @@
+{
+  "browser": true,
+  "globals": {
+      "$": false,
+      "jquery": false,
+      "angular": false,
+      "_": false,
+      "girder": false
+    },
+    "undef": true,
+    "unused": true
+  }
+}
