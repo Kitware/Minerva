@@ -24,17 +24,17 @@ from girder.plugins.minerva.constants import PluginSettings
 
 
 def findNamedFolder(currentUser, user, parent, parentType, name, create=False):
-    folders = [
-        ModelImporter.model('folder').filter(folder, currentUser) for folder in
-        ModelImporter.model('folder').childFolders(
+    folders = list(ModelImporter.model('folder').childFolders(
             parent=parent, parentType=parentType, user=currentUser,
-            filters={'name': name})]
+            filters={'name': name}))
     # folders should have len of 0 or 1, since we are looking in a
     # user folder for a folder with a certain name
     if len(folders) == 0:
         if create:
-            return ModelImporter.model('folder').createFolder(
-                parent, name, parentType=parentType, public=False)
+            folder = ModelImporter.model('folder').createFolder(
+                parent, name, parentType=parentType, public=False,
+                creator=currentUser)
+            return folder
         else:
             return None
     else:
