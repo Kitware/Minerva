@@ -8,12 +8,29 @@ minerva.views.MapPanel = minerva.View.extend({
         }
     },
 
+    transitionToMsa: function (msa) {
+        if (_.has(this.boundingBoxes, msa)) {
+            var add = function (a, b) {
+                return a + b;
+            };
+
+            this.map.transition({
+                center: {
+                    x: _.reduce(this.boundingBoxes[msa][0], add) / 2,
+                    y: _.reduce(this.boundingBoxes[msa][1], add) / 2
+                },
+                zoom: 8,
+                duration: 1000
+            });
+        }
+    },
+
     _specifyWmsDatasetLayer: function (dataset, layer) {
         var minervaMetadata = dataset.getMinervaMetadata();
         var baseUrl = minervaMetadata.base_url;
         if (minervaMetadata.hasOwnProperty('credentials')) {
             baseUrl = '/wms_proxy/' + encodeURIComponent(baseUrl) + '/' +
-                    minervaMetadata.credentials;
+                minervaMetadata.credentials;
         }
         var layerName = minervaMetadata.type_name;
         var projection = 'EPSG:3857';
@@ -47,6 +64,101 @@ minerva.views.MapPanel = minerva.View.extend({
         );
     },
 
+    esToggleClustering: function (evt) {
+        if (this.esClustered) {
+            this.esPointFeature.clustering(false);
+            this.esClustered = false;
+        } else {
+            this.esPointFeature.clustering({radius: 0.0});
+            this.esClustered = true;
+        }
+
+        this.map.draw();
+    },
+
+    _esMouseover: function (evt) {
+        if (evt.data.__cluster) {
+            console.log('Cluster containing ' + evt.data.__data.length + ' points.');
+        } else {
+            console.log(evt.data.properties);
+        }
+    },
+
+    _esMouseclick: function (evt) {
+        var ads;
+
+        if (evt.data.__cluster) {
+            ads = _.pluck(evt.data.__data, 'properties');
+        } else {
+            ads = [evt.data.properties];
+        }
+
+        // Each property of each ad is an array with 1 element.. do some normalizing
+        ads = _.map(ads, function (f) {
+            return _.object(_.keys(f),
+                            _.map(_.values(f), _.first));
+        });
+
+        this.imagespacePanel().ads = ads;
+        this.imagespacePanel().render();
+    },
+
+    imagespacePanel: function () {
+        if (!this._imagespacePanel) {
+            this._imagespacePanel = new minerva.views.ImagespacePanel({
+                el: '.imagespacePanel',
+                parentView: this
+            });
+        }
+
+        return this._imagespacePanel;
+    },
+
+    _renderElasticDataset: function (datasetId) {
+        this.dataset = this.collection.get(datasetId);
+        this.data = JSON.parse(this.dataset.fileData);
+        this.msa = this.dataset.get('meta').minerva.elastic_search_params.msa;
+        this.esFeatureLayer = this.map.createLayer('feature', {
+            renderer: 'vgl'
+        });
+        this.esPointFeature = this.esFeatureLayer.createFeature('point', {
+            selectionAPI: true,
+            dynamicDraw: true
+        });
+        this.esClustered = true;
+        this.datasetLayers[datasetId] = this.esFeatureLayer;
+
+        this.esPointFeature
+            .clustering({radius: 0.0})
+            .style({
+                fillColor: 'black',
+                fillOpacity: 0.65,
+                stroke: false,
+                radius: function (d) {
+                    var baseRadius = 2;
+
+                    if (d.__cluster) {
+                        return baseRadius + Math.log10(d.__data.length);
+                    }
+
+                    return baseRadius;
+                }
+            })
+            .position(function (d) {
+                return {
+                    x: d.geometry.coordinates[0],
+                    y: d.geometry.coordinates[1]
+                };
+            })
+            .geoOn(geo.event.feature.mouseover, this._esMouseover)
+            .geoOn(geo.event.feature.mouseclick, _.bind(this._esMouseclick, this))
+            .data(this.data.features);
+
+        this.map.draw();
+
+        this.transitionToMsa(this.msa);
+    },
+
     addDataset: function (dataset) {
         // TODO HACK
         // deleting and re-adding ui layer to keep it on top
@@ -75,6 +187,9 @@ minerva.views.MapPanel = minerva.View.extend({
                 this.uiLayer = this.map.createLayer('ui');
                 this.uiLayer.createWidget('slider');
                 this.map.draw();
+            } else if (dataset.getDatasetType() === 'elasticsearch') {
+                dataset.once('m:dataLoaded', _.bind(this._renderElasticDataset, this));
+                dataset.loadData();
             } else {
                 // Assume the dataset provides a reader, so load the data
                 // and adapt the dataset to the map with the reader.
@@ -108,7 +223,7 @@ minerva.views.MapPanel = minerva.View.extend({
             this.legendWidget[datasetId].remove(datasetId);
             delete this.legendWidget[datasetId];
         }
-        if (dataset.getDatasetType() === 'wms' && layer) {
+        if (_.contains(['wms', 'elasticsearch'], dataset.getDatasetType()) && layer) {
             this.map.deleteLayer(layer);
         } else if (layer) {
             layer.clear();
@@ -118,6 +233,40 @@ minerva.views.MapPanel = minerva.View.extend({
     },
 
     initialize: function (settings) {
+        this.once('m:rendermap.after', _.bind(function () {
+            var getBoundingBox = _.memoize(function(coordinates) {
+                var minX = _.first(coordinates)[0],
+                    maxX = minX,
+                    minY = _.first(coordinates)[1],
+                    maxY = minY;
+
+                _.each(_.rest(coordinates), function(coordPair) {
+                    minX = (minX < coordPair[0]) ? minX : coordPair[0];
+                    maxX = (maxX > coordPair[0]) ? maxX : coordPair[0];
+                    minY = (minY < coordPair[1]) ? minY : coordPair[1];
+                    maxY = (maxY > coordPair[1]) ? maxY : coordPair[1];
+                });
+
+                return [
+                    [minX, maxX],
+                    [minY, maxY]
+                ];
+            });
+
+            // @todo - this will never work on another machine
+            girder.restRequest({
+                type: 'GET',
+                path: 'file/' + '5627fb65d2a733029f8d0ed0' + '/download'
+            }).done(_.bind(function (resp) {
+                this.boundingBoxes = {};
+
+                _.each(resp, _.bind(function (geojson, msa) {
+                    this.boundingBoxes[msa] = getBoundingBox(
+                        geojson.features[0].geometry.coordinates[0]);
+                }, this));
+            }, this));
+        }, this));
+
         this.session = settings.session;
         this.listenTo(this.session, 'm:mapUpdated', function () {
             // TODO for now only dealing with center
@@ -143,6 +292,8 @@ minerva.views.MapPanel = minerva.View.extend({
                 }
             }
         }, this);
+
+        window.minerva_map = this;
     },
 
     renderMap: function () {
@@ -163,6 +314,8 @@ minerva.views.MapPanel = minerva.View.extend({
             }, this);
         }
         this.map.draw();
+
+        this.trigger('m:rendermap.after', this);
     },
 
     render: function () {

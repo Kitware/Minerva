@@ -4,4 +4,5 @@ npm-debug.log
 *.swp
 .tern-*
 src
+/analyses/*/*/analysis.cfg
 /docs/_build/

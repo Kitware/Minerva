@@ -28,7 +28,8 @@ from girder.utility.model_importer import ModelImporter
 
 from girder.plugins.minerva.rest import \
         analysis, dataset, s3_dataset, session, shapefile, geocode, source, \
-        wms_dataset, wms_source, geojson_dataset, elasticsearch_source
+        wms_dataset, wms_source, geojson_dataset, elasticsearch_source, \
+        postgres_source
 from girder.plugins.minerva.utility.minerva_utility import decryptCredentials
 
 
@@ -63,6 +64,8 @@ class CustomAppRoot(object):
               href="${staticRoot}/lib/fontello/css/animation.css">
         <link rel="stylesheet"
               href="${staticRoot}/built/plugins/minerva/jquery.gridster.min.css">
+        <link rel="stylesheet"
+              href="${staticRoot}/built/plugins/minerva/c3.min.css">
         <link rel="stylesheet"
               href="${staticRoot}/built/app.min.css">
         % for plugin in pluginCss:
@@ -105,6 +108,8 @@ src="http://cdn.jsdelivr.net/bootstrap.daterangepicker/1/daterangepicker.js">
         <script src="${staticRoot}/built/plugins/minerva/papaparse.min.js">
         </script>
         <script src="${staticRoot}/built/plugins/minerva/jsonpath.min.js">
+        </script>
+        <script src="${staticRoot}/built/plugins/minerva/c3.min.js">
         </script>
         <script src="${staticRoot}/built/plugins/minerva/minerva.min.js">
         </script>
@@ -198,5 +203,8 @@ def load(info):
         elasticsearch_source.ElasticsearchSource()
     info['apiRoot'].minerva_query_elasticsearch = \
         elasticsearch_source.ElasticsearchQuery()
+
+    info['apiRoot'].minerva_source_postgres = \
+        postgres_source.PostgresSource()
 
     info['serverRoot'].wms_proxy = WmsProxy()

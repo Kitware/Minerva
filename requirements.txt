@@ -7,3 +7,6 @@ geopy==1.10.0
 owslib==0.9.1
 -e git+https://github.com/Kitware/romanesco.git#egg=romanesco[spark]
 cryptography==1.0.1
+elasticsearch==2.1.0
+elasticsearch-dsl==0.0.8
+psycopg2==2.6.1

@@ -102,6 +102,7 @@ module.exports = function (grunt) {
                 jsDir + '/MinervaCollection.js',
                 jsDir + '/models/DatasetModel.js',
                 jsDir + '/models/SourceModel.js',
+                jsDir + '/models/TerraDatasetModel.js',
                 jsDir + '/models/**/*.js',
                 jsDir + '/collections/**/*.js',
                 jsDir + '/views/**/*.js'
@@ -119,6 +120,9 @@ module.exports = function (grunt) {
             ];
             files[staticDir + '/jsonpath.min.js'] = [
                 jsonpathjsDir + '/jsonpath.js'
+            ];
+            files[staticDir + '/c3.min.js'] = [
+                pluginDir + '/node_modules/c3/c3.js'
             ];
             grunt.config.set('uglify.' + pluginName, {
                 files: files
@@ -154,6 +158,7 @@ module.exports = function (grunt) {
                 // '/' + rootStaticDir + '/libs.min.js', // libs included in jade template
                 '/' + staticDir + '/jquery.gridster.js',
                 '/' + staticDir + '/geo.min.js',
+                '/' + staticDir + '/c3.min.js',
                 '/' + rootStaticDir + '/app.min.js'
             ];
             // if any plugin dependencies have js, add them
@@ -193,6 +198,7 @@ module.exports = function (grunt) {
                 '/' + rootStaticLibDir + '/fontello/css/fontello.css',
                 '/' + rootStaticLibDir + '/fontello/css/animation.css',
                 '/' + staticDir + '/jquery.gridster.min.css',
+                '/' + staticDir + '/c3.min.css',
                 '/' + rootStaticDir + '/app.min.css',
                 'http://cdn.datatables.net/1.10.7/css/jquery.dataTables.css',
                 'http://cdn.jsdelivr.net/bootstrap.daterangepicker/1/daterangepicker-bs3.css'
