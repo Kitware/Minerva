@@ -163,9 +163,12 @@ minerva.views.MapPanel = minerva.View.extend({
             this.map = geo.map({
                 node: '.mapPanelMap',
                 center: this.session.sessionJsonContents.center,
-                zoom: this.session.sessionJsonContents.zoom
+                zoom: this.session.sessionJsonContents.zoom,
+                parallelProjection: true,
+                discreteZoom: true
             });
-            this.map.createLayer(this.session.sessionJsonContents.basemap);
+            this.map.createLayer(this.session.sessionJsonContents.basemap,
+              {baseUrl: 'http://otile1.mqcdn.com/tiles/1.0.0/map/'});
             this.uiLayer = this.map.createLayer('ui');
             this.uiLayer.createWidget('slider');
             this.mapCreated = true;
