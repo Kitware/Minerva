@@ -1,7 +1,7 @@
 /**
-* This widget displays the list of WMS layers
+* This widget displays the list of file types that can be uploaded.
 */
-minerva.views.WmsLayersListWidget = minerva.View.extend({
+minerva.views.LocalUploadWidget = minerva.View.extend({
 
     events: {
         'submit #m-add-layers-form': function (e) {
@@ -101,7 +101,7 @@ minerva.views.WmsLayersListWidget = minerva.View.extend({
     },
 
     /**
-     * Change the current wmsSource whose layers will be displayed.
+     * Change the current wmsSource whose layers will be displayed, and render.
      *
      * @param  wmsSource  The wmsSource to display.
      */
