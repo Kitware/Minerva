@@ -10,7 +10,7 @@
         return name  + 'Widget';
     };
 
-    minerva.views.AnalysisPanel = minerva.View.extend({
+    minerva.views.AnalysisPanel = minerva.views.Panel.extend({
 
         events: {
             'click .m-attempt-analysis': 'attemptAnalysis'
@@ -57,9 +57,10 @@
         },
 
         initialize: function (settings) {
-            this.collection = settings.collection;
-            this.datasetCollection = settings.datasetCollection;
-            this.sourceCollection = settings.sourceCollection;
+            _.extend(this.events, minerva.views.Panel.prototype.events);
+            this.collection = settings.session.analysisCollection;
+            this.datasetCollection = settings.session.datasetsCollection;
+            this.sourceCollection = settings.session.sourceCollection;
             this.listenTo(this.collection, 'g:changed', function () {
                 console.log('AP g:changed');
                 this.render();
