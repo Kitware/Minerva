@@ -27,7 +27,8 @@ minerva.views.MapPanel = minerva.views.Panel.extend({
     },
 
     changeLayerOpacity: function (dataset) {
-        this.datasetLayers[dataset.id].mapOpacity(dataset.get('opacity'));
+        var layer = this.datasetLayers[dataset.get('_id')];
+        layer.opacity(dataset.get('opacity'));
         this.map.draw();
     },
 
@@ -171,7 +172,8 @@ minerva.views.MapPanel = minerva.views.Panel.extend({
         if (!_.contains(this.datasetLayers, dataset.id)) {
             var renderType = dataset.getGeoRenderType();
             if (renderType === null || !_.contains(this.GEOJS_RENDER_TYPES, renderType)) {
-                console.error('This dataset of render type [' + renderType + ']cannot be rendered to the map');
+                console.error('This dataset of render type [' + renderType + '] cannot be rendered to the map');
+                dataset.set('geoError', true);
                 return;
             } else if (renderType === 'wms') {
                 var datasetId = dataset.id;
@@ -183,7 +185,7 @@ minerva.views.MapPanel = minerva.views.Panel.extend({
 
                 this.datasetLayers[datasetId] = layer;
                 this._specifyWmsDatasetLayer(dataset, layer);
-
+                
                 this.legendWidget[datasetId] = new minerva.views.LegendWidget({
                     el: $('.m-map-legend-container'),
                     parentView: this,

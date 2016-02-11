@@ -8,9 +8,10 @@ if datasets
     .datasets
       each dataset in datasets
         if dataset.metadata()
-          .dataset
-            span(title=dataset.get('name'))= dataset.get('name').length > 13 ? dataset.get('name').slice(0,13) + "..." : dataset.get('name')
-              - var attributes = {'m-dataset-id': dataset.get('_id')}
+          - var attributes = {'m-dataset-id': dataset.get('_id')}
+          - var classes = (dataset.get('highlighted') ? 'm-dataset-highlight dataset' : 'dataset')
+          div(class=classes)&attributes(attributes)
+            span(title=dataset.get('name'))= dataset.get('name').length > 20 ? dataset.get('name').slice(0,20) + "..." : dataset.get('name')
 
               //- Eye icon to move dataset into current session
               if dataset.isGeoRenderable()
@@ -26,8 +27,14 @@ if datasets
               - var geoRenderType = dataset.getGeoRenderType()
 
               //- Cog icon for geo rendering configuration
-              if geoRenderType !== null && geoRenderType !== 'wms'
+              if (isGeoConfigurable(geoRenderType))
                 - var classes = 'icon-cog m-configure-geo-render'
+                - classes += (dataset.get('displayed') ? ' icon-disabled dataset-in-session' : ' icon-enabled');
+                - classes += ((!dataset.get('displayed') && dataset.get('geoError')) ? ' m-geo-render-error' : '');
+                i(class=classes)&attributes(attributes)
+
+              if (isTableDisplayable(dataset))
+                - var classes = 'icon-table m-display-dataset-table'
                 - classes += (dataset.get('displayed') ? ' icon-disabled dataset-in-session' : ' icon-enabled');
                 - classes += ((!dataset.get('displayed') && dataset.get('geoError')) ? ' m-geo-render-error' : '');
                 i(class=classes)&attributes(attributes)
