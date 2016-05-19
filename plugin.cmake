@@ -73,6 +73,7 @@ add_web_client_test(
     BASEURL "/static/built/testEnvMinerva.html"
     TEST_MODULE "plugin_tests.web_client_test"
 )
+# A trivial change
 set_property(TEST web_client_minerva PROPERTY LABELS minerva_client)
 
 set_property(TEST js_coverage_reset APPEND PROPERTY LABELS minerva_client)
