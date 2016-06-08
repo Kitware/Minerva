@@ -46,17 +46,18 @@ def setUpModule():
     base.startServer(False)
 
 
+
 def tearDownModule():
     """Stop the server."""
     base.stopServer()
 
 
-class AnalysisTestCase(base.TestCase):
+class BSVEAnalysisTestCase(base.TestCase):
     """Tests of the minerva analysis functionality."""
 
     def setUp(self):
         """Set up the test case with  a user."""
-        super(AnalysisTestCase, self).setUp()
+        super(BSVEAnalysisTestCase, self).setUp()
 
         self._import_done = False
         self._user = self.model('user').createUser(
