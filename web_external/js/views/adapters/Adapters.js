@@ -304,7 +304,8 @@ minerva.rendering.geo.WmsRepresentation = minerva.rendering.geo.defineMapLayer('
     this.init = function (container, dataset) {
         this.geoJsLayer = container.createLayer('osm', {
             attribution: null,
-            keepLower: false
+            keepLower: false,
+            opacity: dataset.get('opacity')
         });
         container.addFeatureInfoLayer(this.geoJsLayer);
         var minervaMetadata = dataset.metadata();
