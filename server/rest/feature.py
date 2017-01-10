@@ -1,4 +1,5 @@
 from collections import defaultdict
+import urllib
 
 from girder import events
 from girder.api import access
@@ -6,6 +7,7 @@ from girder.api.describe import Description
 from girder.api.rest import Resource
 
 import requests
+import cherrypy
 
 
 class FeatureInfo(Resource):
@@ -59,8 +61,10 @@ class FeatureInfo(Resource):
 
         layerSource = []
 
-        bsveurl = 'https://api-dev.bsvecosystem.net/data/v2/sources/' \
-                  'geotiles/data/result'
+        bsveroot = urllib.unquote(
+            cherrypy.request.cookie.get('bsveRoot').value
+        )
+        bsveurl = bsveroot + '/data/v2/sources/geotiles/data/result'
         for i in activeLayers:
             item = self._getMinervaItem(i)
             url = item['meta']['minerva'].get('base_url', bsveurl)
