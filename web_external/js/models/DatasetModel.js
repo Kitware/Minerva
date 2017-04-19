@@ -4,7 +4,7 @@ minerva.models.DatasetModel = minerva.models.MinervaModel.extend({
         // TODO revise and rename these.
         displayed: false,
         files: null,
-        opacity: 1,
+        opacity: 0.7,
         order: null,
         stack: 0,
         // GeoJs related attributes.
@@ -24,7 +24,7 @@ minerva.models.DatasetModel = minerva.models.MinervaModel.extend({
      */
     initialize: function () {
         minerva.models.MinervaModel.prototype.initialize.apply(this, arguments);
-        this.on('change:geoData', this._preprocess, this);
+        this.on('change:geoData', this._preprocesps, this);
         return this;
     },
 
