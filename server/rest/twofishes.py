@@ -24,6 +24,7 @@ import geojson
 import requests
 from shapely.wkt import loads
 
+from girder import events
 from girder.api import access
 from girder.api.describe import Description
 from girder.api.rest import Resource
@@ -42,11 +43,17 @@ class TwoFishes(Resource):
         self.route('POST', ('geojson',), self.postGeojson)
 
     @staticmethod
-    def getWktFromTwoFishes(twofishes, location):
+    def getWktFromTwoFishes(twofishes, location, headers=None):
         """Gets wkt from twofishes for a given location"""
-        r = requests.get(twofishes,
-                         params={'query': location,
-                                 'responseIncludes': 'WKT_GEOMETRY'})
+        if not headers:
+            r = requests.get(twofishes,
+                             params={'query': location,
+                                     'responseIncludes': 'WKT_GEOMETRY'})
+        else:
+            r = requests.get(twofishes,
+                             params={'query': location,
+                                     'responseIncludes': 'WKT_GEOMETRY'},
+                             headers=headers)
         wkt = r.json()['interpretations'][0]['feature']['geometry']['wktGeometry']
 
         return wkt
@@ -90,11 +97,14 @@ class TwoFishes(Resource):
 
     @access.public
     def autocomplete(self, params):
-        r = requests.get(params['twofishes'],
-                         params={'autocomplete': True,
-                                 'query': params['location'],
-                                 'maxInterpretations': 10,
-                                 'autocompleteBias': None})
+        event = events.trigger('minerva.autocomplete', params)
+        r = event.responses
+        if not event.defaultPrevented:
+            r = requests.get(params['twofishes'],
+                             params={'autocomplete': True,
+                                     'query': params['location'],
+                                     'maxInterpretations': 10,
+                                     'autocompleteBias': None})
 
         return [i['feature']['matchedName'] for i in r.json()['interpretations']]
 
@@ -107,7 +117,11 @@ class TwoFishes(Resource):
     @access.public
     def getGeojson(self, params):
         locations = json.loads(params['locations'])
-        geojson = TwoFishes.createGeojson(params['twofishes'], locations)
+        event = events.trigger('minerva.get_geojson', params)
+        geojson = event.responses
+        if not event.defaultPrevented:
+            geojson = TwoFishes.createGeojson(params['twofishes'], locations)
+
         return geojson
 
     getGeojson.description = (
@@ -118,13 +132,16 @@ class TwoFishes(Resource):
 
     @access.public
     def postGeojson(self, params):
-        twofishes = params['twofishes']
-        try:
-            locationInfo = json.loads(params['locations'])
-            geojson = TwoFishes.createGeojson(twofishes, locationInfo)
-        except ValueError:
-            locationInfo = params['locations']
-            geojson = TwoFishes.createGeojson(twofishes, locationInfo)
+        event = events.trigger('minerva.post_geojson', params)
+        geojson = event.responses
+        if not event.defaultPrevented:
+            twofishes = params['twofishes']
+            try:
+                locationInfo = json.loads(params['locations'])
+                geojson = TwoFishes.createGeojson(twofishes, locationInfo)
+            except ValueError:
+                locationInfo = params['locations']
+                geojson = TwoFishes.createGeojson(twofishes, locationInfo)
 
         minervaDataset = self.createMinervaDataset(geojson, params['name'])
         return minervaDataset
