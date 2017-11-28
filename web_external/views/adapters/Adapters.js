@@ -99,6 +99,10 @@ export default adapterRegistry;
 
 const rendering = { geo: {} };
 
+export {
+    rendering
+};
+
 /**
  * Utility function to define a map representation and add it to the Adapter Registry.
  * @param {string} layerType - The type of map visualization used to render the dataset
